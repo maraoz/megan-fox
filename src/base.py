@@ -10,8 +10,11 @@ pygame.init()
 
 
 class MemoryImage(object):
+    """ Represents a image stored in memory. Base type for all images"""
     
     def __init__(self, filename, format = None):
+        # TODO: constructor loads image from file, should be able
+        # to create an image independently from a file 
         self.filename = filename
         if not format:
             format = filename.split(".")[-1]
@@ -19,6 +22,9 @@ class MemoryImage(object):
         self.type = format.lower()
     
     def draw(self):
+        """ Draws the image on screen using pygame.
+        Delegates format-specific details to subclass
+        method implementation in _do_draw() """
         size = (self.width, self.height)
         screen = pygame.display.set_mode(size)
         pygame.display.set_caption("image, "+str(size))
@@ -31,15 +37,20 @@ class MemoryImage(object):
         del pixel_array
         screen.blit (surface, (0, 0))
         pygame.display.flip()
+        
+        # display image until window clicked
         while 1:
-            event = pygame.event.wait ()
+            event = pygame.event.wait()
             if event.type == pygame.QUIT:
                 break
             if event.type == pygame.MOUSEBUTTONDOWN:
                 break
+    def _do_draw(self, pixel_array):
+        raise NotImplementedError
     
 
 class RawImage(MemoryImage):
+    """ Raw image type """
     def __init__(self, width, height, *args, **kwargs):
         MemoryImage.__init__(self, *args, **kwargs)
         if self.type == "raw":
@@ -49,11 +60,6 @@ class RawImage(MemoryImage):
         else:
             raise ValueError("Invalid format for raw image")
         
-    @classmethod
-    def create(cls):
-        pass
-    
-    
     def _do_draw(self, pixel_array):
         for x in xrange(self.height):
             for y in xrange(self.width):
