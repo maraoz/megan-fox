@@ -5,46 +5,9 @@ import pygame
 from array import array
 pygame.init()
 
-def draw(image):
-    size = (image.width, image.height)
-    screen = pygame.display.set_mode(size)
-    pygame.display.set_caption("image")
-    surface = pygame.Surface(size)
-    ar = pygame.PixelArray(surface)
-    pygame.display.flip()
-    
-    if image.type == "raw":
-        draw_raw(image, ar)
-    elif image.type == "bmp":
-        draw_bmp(image, ar)
-    else:
-        raise NotImplementedError
-    
-    del ar
-    screen.blit (surface, (0, 0))
-    pygame.display.flip()
-    while 1:
-        event = pygame.event.wait ()
-        if event.type == pygame.QUIT:
-            break
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            break
 
-def draw_raw(image, ar):
-    
-    for x in xrange(image.height):
-        for y in xrange(image.width):
-            value = image.get_pixel(x,y)
-            ar[y, x] = (value, value, value)
 
-def draw_bmp(image, ar):
-    
-    for x in xrange(image.height):
-        for y in xrange(image.width):
-            r = image.data[(x*image.width+y)*3]
-            g = image.data[(x*image.width+y)*3+1]
-            b = image.data[(x*image.width+y)*3+2]
-            ar[y, x] = (r,g,b)
+
 
 class MemoryImage(object):
     
@@ -54,6 +17,26 @@ class MemoryImage(object):
             format = filename.split(".")[-1]
             
         self.type = format.lower()
+    
+    def draw(self):
+        size = (self.width, self.height)
+        screen = pygame.display.set_mode(size)
+        pygame.display.set_caption("image, "+str(size))
+        surface = pygame.Surface(size)
+        pixel_array = pygame.PixelArray(surface)
+        pygame.display.flip()
+        
+        self._do_draw(pixel_array)
+        
+        del pixel_array
+        screen.blit (surface, (0, 0))
+        pygame.display.flip()
+        while 1:
+            event = pygame.event.wait ()
+            if event.type == pygame.QUIT:
+                break
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                break
     
 
 class RawImage(MemoryImage):
@@ -70,6 +53,13 @@ class RawImage(MemoryImage):
     def create(cls):
         pass
     
+    
+    def _do_draw(self, pixel_array):
+        for x in xrange(self.height):
+            for y in xrange(self.width):
+                value = self.get_pixel(x,y)
+                pixel_array[y, x] = (value, value, value)
+        
     def get_pixel(self, x, y):
         return self.data[x*self.width+y]
     
@@ -93,24 +83,33 @@ class FormatImage(MemoryImage):
         
         self.data = array('B', im.tostring())
         self.width, self.height = im.size
+        
+class BMPImage(FormatImage):
+    def _do_draw(self, pixel_array):
+        for x in xrange(self.height):
+            for y in xrange(self.width):
+                r = self.data[(x*self.width+y)*3]
+                g = self.data[(x*self.width+y)*3+1]
+                b = self.data[(x*self.width+y)*3+2]
+                pixel_array[y, x] = (r,g,b)
 
 
 
 
 if __name__ == "__main__":
     
-    draw(RawImage(290,207,"images/BARCO.RAW"))
-    draw(RawImage(200,200,"images/FRACTAL.RAW"))
-    draw(RawImage(389,164,"images/GIRL.RAW"))
-    draw(RawImage(256,256,"images/LENA.RAW"))
-    draw(RawImage(256,256,"images/LENAX.RAW"))
-    draw(RawImage(256,256,"images/GIRL2.RAW"))
-    draw(RawImage(256,256,"images/new.raw"))
-    draw(FormatImage("images/MEGAN.BMP"))
+    RawImage(290,207,"images/BARCO.RAW").draw()
+    RawImage(200,200,"images/FRACTAL.RAW").draw()
+    RawImage(389,164,"images/GIRL.RAW").draw()
+    RawImage(256,256,"images/LENA.RAW").draw()
+    RawImage(256,256,"images/LENAX.RAW").draw()
+    RawImage(256,256,"images/GIRL2.RAW").draw()
+    BMPImage("images/MEGAN.BMP").draw()
     
     
     i = RawImage(256,256,"images/GIRL2.RAW")
-    for x in xrange(10,20):
-        for y in xrange(10,20):
+    for x in xrange(10,50):
+        for y in xrange(10,50):
             i.set_pixel(x,y,0)
+    i.draw()
     i.save("images/new.raw")
