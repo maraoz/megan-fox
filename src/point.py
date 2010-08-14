@@ -48,15 +48,12 @@ class PointBMPImage(BMPImage):
         3-tuple of r,g,b values instead of over each byte. """
         for y in xrange(self.width):
             for x in xrange(self.height):
-                r = self.get_pixel(x,y, RED)
-                g = self.get_pixel(x,y, GREEN)
-                b = self.get_pixel(x,y, BLUE)
+                r, g, b = [self.get_pixel(x, y, c) for c in [RED, GREEN, BLUE]]
                 t = function(r,g,b)
                 if t is not None: 
                     r2, g2, b2 = t  
-                    self.set_pixel(x,y,RED, r2)
-                    self.set_pixel(x,y,GREEN, g2)
-                    self.set_pixel(x,y,BLUE, b2)
+                    for color, v in [(RED, r2), (GREEN, g2), (BLUE, b2)]:
+                        self.set_pixel(x, y, color, v)
     
     def negate(self):
         """ Negates every pixel in the image. """
@@ -118,8 +115,5 @@ class PointBMPImage(BMPImage):
 
 if __name__ == "__main__":
     megan = PointBMPImage("images/MEGAN.BMP")
-    megan.thresholdize(3*L/4)
-    megan.negate()
     megan.black_and_white()
     megan.draw()
-    megan.save("output/fumeta.bmp")
