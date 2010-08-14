@@ -89,16 +89,29 @@ class FormatImage(MemoryImage):
         
         self.data = array('B', im.tostring())
         self.width, self.height = im.size
-        
+
+RED, GREEN, BLUE = range(3)
+
 class BMPImage(FormatImage):
     def _do_draw(self, pixel_array):
         for x in xrange(self.height):
             for y in xrange(self.width):
-                r = self.data[(x*self.width+y)*3]
-                g = self.data[(x*self.width+y)*3+1]
-                b = self.data[(x*self.width+y)*3+2]
+                r = self.get_pixel(x, y, RED)
+                g = self.get_pixel(x, y, GREEN)
+                b = self.get_pixel(x, y, BLUE)
                 pixel_array[y, x] = (r,g,b)
-
+    
+    def get_pixel(self, x, y, color):
+        return self.data[(x*self.width+y)*3 + color]
+    
+    def set_pixel(self, x, y, color, value):
+        self.data[(x*self.width+y)*3 + color] = value
+    
+    def save(self, filename):
+        raise NotImplementedError
+    
+    def crop(self, x, y, width, height):
+        pass
 
 
 
