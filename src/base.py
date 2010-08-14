@@ -90,7 +90,7 @@ class FormatImage(MemoryImage):
         self.data = array('B', im.tostring())
         self.width, self.height = im.size
 
-RED, GREEN, BLUE = range(3)
+RGB_COLORS = RED, GREEN, BLUE = range(3)
 
 class BMPImage(FormatImage):
     def _do_draw(self, pixel_array):
@@ -108,7 +108,8 @@ class BMPImage(FormatImage):
         self.data[(x*self.width+y)*3 + color] = value
     
     def save(self, filename):
-        raise NotImplementedError
+        new_image = Image.fromstring('RGB', (self.width, self.height), self.data.tostring())
+        new_image.save(filename, "BMP")
     
     def crop(self, x, y, width, height):
         pass
