@@ -96,9 +96,7 @@ class BMPImage(FormatImage):
     def _do_draw(self, pixel_array):
         for x in xrange(self.height):
             for y in xrange(self.width):
-                r = self.get_pixel(x, y, RED)
-                g = self.get_pixel(x, y, GREEN)
-                b = self.get_pixel(x, y, BLUE)
+                r, g, b = [self.get_pixel(x, y, c) for c in [RED, GREEN, BLUE]]
                 pixel_array[y, x] = (r,g,b)
     
     def get_pixel(self, x, y, color):
