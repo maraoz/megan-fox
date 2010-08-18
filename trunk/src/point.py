@@ -1,6 +1,7 @@
 # *-* coding: utf-8 *-*
 
 from base import RawImage, BMPImage, RGB_COLORS, RED, GREEN, BLUE
+from math import log
     
 
 class PointRawImage(RawImage):
@@ -14,16 +15,30 @@ class PointBMPImage(BMPImage):
     """ BMP format image that supports point operators"""
     
     def __add__(self, other):
-        def f(my_pixel):
-            for other_pixel in other:
-                yield (mi_pixel + other_pixel)/2
-        self._map(f)
-    
+        if self.width != other.width or \
+            self.height != other.height:
+            raise ValueError
+
+        R = (L-1)*(L-1)        
+        for y in xrange(self.width):
+            for x in xrange(self.height):
+                for color in RGB_COLORS:
+                    value1 = self.get_pixel(x,y,color)
+                    value2 = other.get_pixel(x,y,color) 
+                    normalized = self.normalize(value1+value2, R) 
+                    self.set_pixel(x,y,color, normalized)
+        # TODO: should copy itself and return modified copy
+        # this version affects left image in the sum (WRONG!)
     def __sub__(self, other):
         raise NotImplementedError
     
-    def __mul__(self, other):
-        raise NotImplementedError
+    def __rmul__(self, n):
+        if type(n) is not int:
+            raise ValueError
+        R = n*(L-1)
+        self._map(lambda r: self.normalize(n*r,R))
+        # TODO: should copy itself and return modified copy
+        # this version affects original image (WRONG!)
     
     def __iter__(self):
         for y in xrange(self.width):
@@ -60,6 +75,8 @@ class PointBMPImage(BMPImage):
         self._map(lambda r: L - 1 - r)
         
     def thresholdize(self, u):
+        """ Takes each pixel to an extreme evaluating if it is below
+        or over a certain threshold. """
         self._map(lambda r: 0 if r <= u else L - 1)
         
     def contrastize(self, r1, r2):
@@ -105,9 +122,12 @@ class PointBMPImage(BMPImage):
         self._map_rgb(f)
         return hist
     
-    def normalize(self):
-        """ Makes every pixel value fall in the valid range [0-255]"""
-        raise NotImplementedError
+    def normalize(self, r, R):
+        """ Makes a pixel's value fall in the valid range [0, L-1].
+        r is the original pixel value and R is the maximum value
+        it can take. """
+        c = (L-1) / log(1+R)
+        return int(c * log(1+r))
     
     
 
@@ -115,5 +135,5 @@ class PointBMPImage(BMPImage):
 
 if __name__ == "__main__":
     megan = PointBMPImage("images/MEGAN.BMP")
-    megan.black_and_white()
+    megan+megan
     megan.draw()
