@@ -45,7 +45,7 @@ class Image(object):
 				image = PIL.Image.open(filename)
 				if image.mode == "1":
 					self.__color = False
-				else if image.mode == "RGB":
+				elif image.mode == "RGB":
 					self.__color = True
 				else:
 					raise AssertionError("Color mode %s not supported" % image.mode)
