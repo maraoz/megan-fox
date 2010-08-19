@@ -1,9 +1,7 @@
 # *-* coding: utf-8 *-*
 
 import Image
-import pygame
 from array import array
-pygame.init()
 
 
  
