@@ -128,7 +128,7 @@ class ColorImage(MemoryImage):
         self.data[(x * self.width + y) * 3 + color] = value
     
     @classmethod
-    def blank(cls, width, height):
+    def _blank(cls, width, height):
         return [255.0 for c in xrange(width * height * 3)]
     @classmethod
     def _rectangle(cls, width, height, x0, y0, w, h):
@@ -144,8 +144,8 @@ class ColorImage(MemoryImage):
 
 class RawImage(GrayscaleImage):
     """ Raw image type """
-    def __init__(self, width, height, filename=None):
-        if filename:
+    def __init__(self, width=None, height=None, filename=None):
+        if filename and width and height:
             fin = open(filename)
             self.data = array('d', [float(ord(c)) for c in fin.read()])
             self.width, self.height = width, height
@@ -185,9 +185,19 @@ if __name__ == "__main__":
 
     PGMImage("images/TEST.PGM").draw()
     PPMImage("images/WEST.PPM").draw()
-    
     RawImage(290, 207, "images/BARCO.RAW").draw()
     BMPImage("images/MEGAN.BMP").draw()
+    
+    width = height = 200
+    PGMImage.blank(width, height).draw()
+    PPMImage.blank(width, height).draw()
+    RawImage.blank(width, height).draw()
+    BMPImage.blank(width, height).draw()
+    
+    PPMImage("images/WEST.PPM").draw()
+    RawImage(290, 207, "images/BARCO.RAW").draw()
+    BMPImage("images/MEGAN.BMP").draw()
+    
 
     RawImage(200, 200, "images/FRACTAL.RAW").draw()
     RawImage(389, 164, "images/GIRL.RAW").draw()
