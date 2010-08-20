@@ -19,14 +19,15 @@ class PointBMPImage(BMPImage):
             self.height != other.height:
             raise ValueError
 
-        R = (L-1)*(L-1)        
+        R = (L-1)*2     
         for y in xrange(self.width):
             for x in xrange(self.height):
                 for color in RGB_COLORS:
                     value1 = self.get_pixel(x,y,color)
                     value2 = other.get_pixel(x,y,color) 
-                    normalized = self.normalize(value1+value2, R) 
-                    self.set_pixel(x,y,color, normalized)
+                    sum = value1+value2
+                    self.set_pixel(x,y,color, sum)
+        self.normalize(R)
         # TODO: should copy itself and return modified copy
         # this version affects left image in the sum (WRONG!)
     def __sub__(self, other):
@@ -36,7 +37,8 @@ class PointBMPImage(BMPImage):
         if type(n) is not int:
             raise ValueError
         R = n*(L-1)
-        self._map(lambda r: self.normalize(n*r,R))
+        self._map(lambda r: n*r)
+        self.normalize(R)
         # TODO: should copy itself and return modified copy
         # this version affects original image (WRONG!)
     
@@ -101,7 +103,15 @@ class PointBMPImage(BMPImage):
     
     def black_and_white(self):
         """ Turns a color image to black and white. """
-        self._map_rgb(lambda r,g,b: ((r+g+b)/3, (r+g+b)/3, (r+g+b)/3))
+        
+        # mean transform
+        #self._map_rgb(lambda r,g,b: ((r+g+b)/3, (r+g+b)/3, (r+g+b)/3))
+        
+        # luma transform
+        def luma_transform(r,g,b):
+            l = r * 299.0/1000 + g * 587.0/1000 + b * 114.0/1000
+            return (l,l,l)
+        self._map_rgb(luma_transform)
     
     
     def histogram(self):
@@ -122,18 +132,23 @@ class PointBMPImage(BMPImage):
         self._map_rgb(f)
         return hist
     
-    def normalize(self, r, R):
-        """ Makes a pixel's value fall in the valid range [0, L-1].
-        r is the original pixel value and R is the maximum value
-        it can take. """
-        c = (L-1) / log(1+R)
-        return int(c * log(1+r))
-    
+    def normalize(self, R):
+        """ Makes all image's pixels fall in the valid range [0, L-1].
+        R is the maximum value it can take. """
+        
+        # logarithmic
+        #c = (L-1) / log(1+R)
+        #self._map(lambda r: c * log(1+r))
+        
+        # linear
+        m = (L-1)/(R+0.0)
+        self._map(lambda r: m*r)
     
 
 
 
 if __name__ == "__main__":
     megan = PointBMPImage("images/MEGAN.BMP")
-    megan+megan
+    megan.draw()
+    megan.black_and_white()
     megan.draw()
