@@ -30,6 +30,7 @@ class MemoryImage(object):
             window.close()
         
         pyglet.app.run()
+        return self
 
     @classmethod
     def blank(cls, width, height):
@@ -142,6 +143,12 @@ class ColorImage(MemoryImage):
                         l.append(0.0)
         return l
 
+
+
+
+
+
+
 class RawImage(GrayscaleImage):
     """ Raw image type """
     def __init__(self, width=None, height=None, filename=None):
@@ -159,15 +166,20 @@ class RawImage(GrayscaleImage):
         pass
         
         
-            
-
-
-
 class PGMImage(EasyLoadImage, GrayscaleImage):
     """ PGM Image Format"""
+    def save(self, filename):
+        new_image = Image.fromstring('L', (self.width, self.height), \
+                    "".join([chr(int(c)) for c in self.data]))
+        # PGM not supported, saving in PNG format
+        new_image.save(filename.lower().replace("pgm","png"), "PNG")
 
 class PPMImage(EasyLoadImage, ColorImage):
     """ PPM Image Format"""
+    def save(self, filename):
+        new_image = Image.fromstring('RGB', (self.width, self.height), \
+                    "".join([chr(int(c)) for c in self.data]))
+        new_image.save(filename, "PPM")
 
 class BMPImage(EasyLoadImage, ColorImage):
     
@@ -183,33 +195,47 @@ class BMPImage(EasyLoadImage, ColorImage):
 
 if __name__ == "__main__":
 
+    # loading and drawing images of all 4 types
     PGMImage("images/TEST.PGM").draw()
     PPMImage("images/WEST.PPM").draw()
     RawImage(290, 207, "images/BARCO.RAW").draw()
     BMPImage("images/MEGAN.BMP").draw()
     
+    # creating a blank image file
     width = height = 200
-    PGMImage.blank(width, height).draw()
-    PPMImage.blank(width, height).draw()
-    RawImage.blank(width, height).draw()
-    BMPImage.blank(width, height).draw()
+    pgm = PGMImage.blank(width, height).draw()
+    ppm = PPMImage.blank(width, height).draw()
+    raw = RawImage.blank(width, height).draw()
+    bmp = BMPImage.blank(width, height).draw()
     
-    PPMImage("images/WEST.PPM").draw()
-    RawImage(290, 207, "images/BARCO.RAW").draw()
-    BMPImage("images/MEGAN.BMP").draw()
+    # pixel-wise edition of an image
+    for x in xrange(10, 50):
+        for y in xrange(10, 50):
+            pgm.set_pixel(x, y, 0)
+    for x in xrange(10, 50):
+        for y in xrange(10, 50):
+            for c in RGB_COLORS:
+                ppm.set_pixel(x, y, c, 0)
+    for x in xrange(10, 50):
+        for y in xrange(10, 50):
+            raw.set_pixel(x, y, 0)
+    for x in xrange(10, 50):
+        for y in xrange(10, 50):
+            for c in RGB_COLORS:
+                bmp.set_pixel(x, y, c, 0)
+    
+    
+    # saving all 4 image types
+    pgm.save("blank.pgm")
+    ppm.save("blank.ppm")
+    raw.save("blank.raw")
+    bmp.save("blank.bmp")
     
 
+    # displaying all raw images
     RawImage(200, 200, "images/FRACTAL.RAW").draw()
     RawImage(389, 164, "images/GIRL.RAW").draw()
     RawImage(256, 256, "images/LENA.RAW").draw()
     RawImage(256, 256, "images/LENAX.RAW").draw()
     RawImage(256, 256, "images/GIRL2.RAW").draw()
     
-    
-    i = RawImage(256, 256, "images/GIRL2.RAW")
-    for x in xrange(10, 50):
-        for y in xrange(10, 50):
-            i.set_pixel(x, y, 0)
-    i.draw()
-    i.save("images/new.raw")
-
