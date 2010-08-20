@@ -74,22 +74,22 @@ class GrayscaleImage(MemoryImage):
     def _do_draw(self):
         color_list = []
         coord_list = []
-        for x in xrange(self.height):
-            for y in xrange(self.width):
+        for x in xrange(self.width):
+            for y in xrange(self.height):
+                coord_list.append(x)
                 coord_list.append(y)
-                coord_list.append(self.height - x)
                 for t in RGB_COLORS:
-                    color_list.append(int(self.get_pixel(x, y)))
+                    color_list.append(int(self.get_pixel(x, self.height - 1 - y)))
         pyglet.graphics.draw(self.width * self.height, pyglet.gl.GL_POINTS,
             ('v2i', tuple(coord_list)),
             ('c3B', tuple(color_list))
         )
         
     def get_pixel(self, x, y):
-        return self.data[x * self.width + y]
+        return self.data[y * self.width + x]
     
     def set_pixel(self, x, y, value):
-        self.data[x * self.width + y] = value
+        self.data[y * self.width + x] = value
     
     @classmethod
     def _blank(cls, width, height):
@@ -111,22 +111,22 @@ class ColorImage(MemoryImage):
     def _do_draw(self):
         color_list = []
         coord_list = []
-        for x in xrange(self.height):
-            for y in xrange(self.width):
+        for x in xrange(self.width):
+            for y in xrange(self.height):
+                coord_list.append(x)
                 coord_list.append(y)
-                coord_list.append(self.height - x)
                 for c in RGB_COLORS:
-                    color_list.append(int(self.get_pixel(x, y, c)))
+                    color_list.append(int(self.get_pixel(x, self.height - 1 - y, c)))
         pyglet.graphics.draw(self.width * self.height, pyglet.gl.GL_POINTS,
             ('v2i', tuple(coord_list)),
             ('c3B', tuple(color_list))
         )
     
     def get_pixel(self, x, y, color):
-        return self.data[(x * self.width + y) * 3 + color]
+        return self.data[(y * self.width + x) * 3 + color]
     
     def set_pixel(self, x, y, color, value):
-        self.data[(x * self.width + y) * 3 + color] = value
+        self.data[(y * self.width + x) * 3 + color] = value
     
     @classmethod
     def _blank(cls, width, height):
@@ -142,7 +142,7 @@ class ColorImage(MemoryImage):
                     else:
                         l.append(0.0)
         return l
-
+    
 
 
 
@@ -172,7 +172,7 @@ class PGMImage(EasyLoadImage, GrayscaleImage):
         new_image = Image.fromstring('L', (self.width, self.height), \
                     "".join([chr(int(c)) for c in self.data]))
         # PGM not supported, saving in PNG format
-        new_image.save(filename.lower().replace("pgm","png"), "PNG")
+        new_image.save(filename.lower().replace("pgm", "png"), "PNG")
 
 class PPMImage(EasyLoadImage, ColorImage):
     """ PPM Image Format"""
@@ -191,6 +191,23 @@ class BMPImage(EasyLoadImage, ColorImage):
     def crop(self, x, y, width, height):
         pass
 
+
+
+def display_greyscale_gradient():
+    image = GrayscaleImage.blank(255, 255)
+    for x in xrange(image.width):
+        for y in xrange(image.height):
+            image.set_pixel(x, y, x)
+    image.draw()
+
+def display_color_gradient():
+    image = ColorImage.blank(256,256)
+    for x in xrange(image.width):
+        for y in xrange(image.height):
+            image.set_pixel(x,y,BLUE,x)
+            image.set_pixel(x,y,GREEN,y)
+            image.set_pixel(x,y,RED, 128)
+    image.draw()
 
 
 if __name__ == "__main__":
@@ -231,8 +248,15 @@ if __name__ == "__main__":
     raw.save("blank.raw")
     bmp.save("blank.bmp")
     
+    # display grayscale gradient
+    display_greyscale_gradient()
+    
+    # display color gradient
+    display_color_gradient()
 
-    # displaying all raw images
+    
+
+    # displaying all remaining raw images
     RawImage(200, 200, "images/FRACTAL.RAW").draw()
     RawImage(389, 164, "images/GIRL.RAW").draw()
     RawImage(256, 256, "images/LENA.RAW").draw()
