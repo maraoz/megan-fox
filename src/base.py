@@ -2,6 +2,7 @@
 
 import Image
 from array import array
+from random import randint
 
 import pyglet 
 
@@ -32,6 +33,7 @@ class MemoryImage(object):
         pyglet.app.run()
         return self
 
+
     @classmethod
     def blank(cls, width, height):
         obj = cls()
@@ -55,7 +57,7 @@ class MemoryImage(object):
     @classmethod
     def _rectangle(cls, width, height, x0, y0, w, h):
         raise NotImplementedError
-    
+
     def _do_draw(self, pixel_array):
         raise NotImplementedError
 
@@ -90,6 +92,14 @@ class GrayscaleImage(MemoryImage):
     
     def set_pixel(self, x, y, value):
         self.data[y * self.width + x] = value
+    
+    def crop(self, x, y, width, height):
+        new = GrayscaleImage.blank(width, height)
+        for xp in xrange(width):
+            for yp in xrange(height):
+                value = self.get_pixel(xp + x, yp + y)
+                new.set_pixel(xp, yp, value)
+        return new
     
     @classmethod
     def _blank(cls, width, height):
@@ -128,6 +138,16 @@ class ColorImage(MemoryImage):
     def set_pixel(self, x, y, color, value):
         self.data[(y * self.width + x) * 3 + color] = value
     
+    def crop(self, x, y, width, height):
+        new = ColorImage.blank(width, height)
+        for xp in xrange(width):
+            for yp in xrange(height):
+                for c in RGB_COLORS:
+                    value = self.get_pixel(xp + x, yp + y, c)
+                    new.set_pixel(xp, yp, c, value)
+        return new
+    
+    
     @classmethod
     def _blank(cls, width, height):
         return [255.0 for c in xrange(width * height * 3)]
@@ -162,9 +182,6 @@ class RawImage(GrayscaleImage):
         fout.write(self.data.tostring())
         fout.close()
     
-    def crop(self, x, y, width, height):
-        pass
-        
         
 class PGMImage(EasyLoadImage, GrayscaleImage):
     """ PGM Image Format"""
@@ -187,9 +204,6 @@ class BMPImage(EasyLoadImage, ColorImage):
         new_image = Image.fromstring('RGB', (self.width, self.height), \
                     "".join([chr(int(c)) for c in self.data]))
         new_image.save(filename, "BMP")
-    
-    def crop(self, x, y, width, height):
-        pass
 
 
 
@@ -201,22 +215,38 @@ def display_greyscale_gradient():
     image.draw()
 
 def display_color_gradient():
-    image = ColorImage.blank(256,256)
+    image = ColorImage.blank(256, 256)
     for x in xrange(image.width):
         for y in xrange(image.height):
-            image.set_pixel(x,y,BLUE,x)
-            image.set_pixel(x,y,GREEN,y)
-            image.set_pixel(x,y,RED, 128)
+            image.set_pixel(x, y, BLUE, x)
+            image.set_pixel(x, y, GREEN, y)
+            image.set_pixel(x, y, RED, 128)
+    image.draw()
+
+def display_grayscale_random():
+    image = GrayscaleImage.blank(256, 256)
+    for x in xrange(image.width):
+        for y in xrange(image.height):
+            image.set_pixel(x, y, randint(0, 255))
+    image.draw()
+
+def display_color_random():
+    image = ColorImage.blank(256, 256)
+    for x in xrange(image.width):
+        for y in xrange(image.height):
+            for c in RGB_COLORS:
+                image.set_pixel(x, y, c, randint(0, 255))
     image.draw()
 
 
 if __name__ == "__main__":
 
+
     # loading and drawing images of all 4 types
     PGMImage("images/TEST.PGM").draw()
     PPMImage("images/WEST.PPM").draw()
-    RawImage(290, 207, "images/BARCO.RAW").draw()
-    BMPImage("images/MEGAN.BMP").draw()
+    barco = RawImage(290, 207, "images/BARCO.RAW").draw()
+    megan = BMPImage("images/MEGAN.BMP").draw()
     
     # creating a blank image file
     width = height = 200
@@ -250,10 +280,18 @@ if __name__ == "__main__":
     
     # display grayscale gradient
     display_greyscale_gradient()
-    
     # display color gradient
     display_color_gradient()
 
+    # display random color image
+    display_color_random()
+    # display random grayscale image
+    display_grayscale_random()
+    
+    
+    # cropping images
+    megan.crop(200,100,200,200).draw()
+    barco.crop(100,100,100,100).draw()
     
 
     # displaying all remaining raw images
