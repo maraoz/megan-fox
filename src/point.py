@@ -15,58 +15,92 @@ class PointBMPImage(BMPImage):
     """ BMP format image that supports point operators"""
     
     def __add__(self, other):
+        """ Image sum """
         if self.width != other.width or \
             self.height != other.height:
             raise ValueError
 
-        R = (L-1)*2     
-        for y in xrange(self.width):
-            for x in xrange(self.height):
+        copy = self.copy()
+        for x in xrange(copy.width):
+            for y in xrange(copy.height):
                 for color in RGB_COLORS:
-                    value1 = self.get_pixel(x,y,color)
-                    value2 = other.get_pixel(x,y,color) 
-                    sum = value1+value2
-                    self.set_pixel(x,y,color, sum)
-        self.normalize(R)
-        # TODO: should copy itself and return modified copy
-        # this version affects left image in the sum (WRONG!)
+                    value1 = copy.get_pixel(x, y, color)
+                    value2 = other.get_pixel(x, y, color) 
+                    sum = value1 + value2
+                    copy.set_pixel(x, y, color, sum)
+        R = (L-1) * 2     
+        copy.normalize(0, max(copy.data))
+        return copy
+    
     def __sub__(self, other):
-        raise NotImplementedError
+        """ Image difference"""
+        if self.width != other.width or \
+            self.height != other.height:
+            raise ValueError
+        copy = self.copy()
+        for x in xrange(copy.width):
+            for y in xrange(copy.height):
+                for color in RGB_COLORS:
+                    value1 = copy.get_pixel(x, y, color)
+                    value2 = other.get_pixel(x, y, color) 
+                    diff = value1 - value2
+                    copy.set_pixel(x, y, color, diff)
+        copy.normalize(min(copy.data), max(copy.data))
+        return copy
+    
+    def __mul__(self, other):
+        """ Image product (pixel-by-pixel)"""
+        if self.width != other.width or \
+            self.height != other.height:
+            raise ValueError
+        
+        copy = self.copy()
+        for x in xrange(copy.width):
+            for y in xrange(copy.height):
+                for color in RGB_COLORS:
+                    value1 = copy.get_pixel(x, y, color)
+                    value2 = other.get_pixel(x, y, color) 
+                    prod = value1 * value2
+                    copy.set_pixel(x, y, color, prod)
+        copy.normalize(0, max(copy.data))
+        return copy
     
     def __rmul__(self, n):
+        """Scalar product of an image """
         if type(n) is not int:
             raise ValueError
-        R = n*(L-1)
-        self._map(lambda r: n*r)
-        self.normalize(R)
-        # TODO: should copy itself and return modified copy
-        # this version affects original image (WRONG!)
+        
+        copy = self.copy()
+        copy._map(lambda r: n * r)
+        
+        copy.normalize(min(copy.data), max(copy.data))
+        return copy
     
     def __iter__(self):
-        for y in xrange(self.width):
-            for x in xrange(self.height):
+        for x in xrange(self.width):
+            for y in xrange(self.height):
                 for color in RGB_COLORS:
-                    yield self.get_pixel(x,y, color)
+                    yield self.get_pixel(x, y, color)
     
     def _map(self, function):
         """ Evaluates a function for every pixel in the image,
         and if the function returns a value, it assigns this
         new value to the pixel in the image """
-        for y in xrange(self.width):
-            for x in xrange(self.height):
+        for x in xrange(self.width):
+            for y in xrange(self.height):
                 for color in RGB_COLORS:
-                    value = self.get_pixel(x,y, color)
+                    value = self.get_pixel(x, y, color)
                     modified = function(value)
                     if modified is not None:
-                        self.set_pixel(x,y,color, modified)
+                        self.set_pixel(x, y, color, modified)
     
     def _map_rgb(self, function):
         """ Same as _map, but evaluates the function over each
         3-tuple of r,g,b values instead of over each byte. """
-        for y in xrange(self.width):
-            for x in xrange(self.height):
+        for x in xrange(self.width):
+            for y in xrange(self.height):
                 r, g, b = [self.get_pixel(x, y, c) for c in [RED, GREEN, BLUE]]
-                t = function(r,g,b)
+                t = function(r, g, b)
                 if t is not None: 
                     r2, g2, b2 = t  
                     for color, v in [(RED, r2), (GREEN, g2), (BLUE, b2)]:
@@ -75,31 +109,34 @@ class PointBMPImage(BMPImage):
     def negate(self):
         """ Negates every pixel in the image. """
         self._map(lambda r: L - 1 - r)
+        return self
         
     def thresholdize(self, u):
         """ Takes each pixel to an extreme evaluating if it is below
         or over a certain threshold. """
         self._map(lambda r: 0 if r <= u else L - 1)
+        return self
         
     def contrastize(self, r1, r2):
         """ Enhances contrast of image by making bright colors
         brighter and dark colors darker. r1 and r2 are the limits
         of what is considered a dark color or a bright color."""
-        assert 0 <= r1 < r2 <= L -1
-        t1 = L /4
+        assert 0 <= r1 < r2 <= L - 1
+        t1 = L / 4
         t2 = 3 * L / 4  
         def contrast(byte):
             if 0 <= byte <= r1:
                 return byte * (t1 / r1)
             elif r1 < byte <= r2:
-                m = ((t2-t1)/(r2-r1))
+                m = ((t2 - t1) / (r2 - r1))
                 b = t2 - m * r2
                 return m * byte + b
-            elif r2 < L -1:
-                m = ((L - 1 -t2)/(L - 1 -r2))
+            elif r2 < L - 1:
+                m = ((L - 1 - t2) / (L - 1 - r2))
                 b = t2 - m * r2
                 return m * byte + b
         self._map(contrast)
+        return self
     
     def black_and_white(self):
         """ Turns a color image to black and white. """
@@ -108,10 +145,11 @@ class PointBMPImage(BMPImage):
         #self._map_rgb(lambda r,g,b: ((r+g+b)/3, (r+g+b)/3, (r+g+b)/3))
         
         # luma transform
-        def luma_transform(r,g,b):
-            l = r * 299.0/1000 + g * 587.0/1000 + b * 114.0/1000
-            return (l,l,l)
+        def luma_transform(r, g, b):
+            l = r * 299.0 / 1000 + g * 587.0 / 1000 + b * 114.0 / 1000
+            return (l, l, l)
         self._map_rgb(luma_transform)
+        return self
     
     
     def histogram(self):
@@ -124,7 +162,7 @@ class PointBMPImage(BMPImage):
             for i in xrange(L):
                 hist[color][i] = 0
         
-        def f(r,g,b):
+        def f(r, g, b):
             hist["r"][r] += 1
             hist["g"][g] += 1
             hist["b"][b] += 1
@@ -132,7 +170,29 @@ class PointBMPImage(BMPImage):
         self._map_rgb(f)
         return hist
     
-    def normalize(self, R):
+    def equalize(self, histogram):
+        n = self.width*self.height
+        def t(r,g,b):
+            R,G,B = 0.0, 0.0, 0.0
+            for j in xrange(int(r)):
+                nj = float(histogram['r'][j])
+                R += nj / n
+            for j in xrange(int(g)):
+                nj = float(histogram['g'][j])
+                G += nj / n
+            for j in xrange(int(b)):
+                nj = float(histogram['b'][j])
+                B += nj / n
+            return R,G,B
+        
+        self._map_rgb(t)
+        
+        smin = min(self.data)
+        self._map(lambda r: int((r-smin)*(L-1)/(1-smin)+0.5))
+        
+        return self
+    
+    def normalize(self, Q, R):
         """ Makes all image's pixels fall in the valid range [0, L-1].
         R is the maximum value it can take. """
         
@@ -141,14 +201,51 @@ class PointBMPImage(BMPImage):
         #self._map(lambda r: c * log(1+r))
         
         # linear
-        m = (L-1)/(R+0.0)
-        self._map(lambda r: m*r)
+        m = (L - 1) / (R - Q)
+        b = -m * Q
+        self._map(lambda r: m * r + b)
     
 
 
 
 if __name__ == "__main__":
+    # loading images from files
     megan = PointBMPImage("images/MEGAN.BMP")
+    robot = PointBMPImage("images/MARS.BMP")
+    
+    # auto equalize with histogram
+    equ = megan.copy().equalize(megan.histogram())
     megan.draw()
-    megan.black_and_white()
+    equ.draw()
+    # image sum
+    sum = megan + robot
+    sum.draw()
+    
+    #image product
+    prod = megan * robot
+    prod.draw()
+    
+    # scalar product of an image
+    scalar = 3 * megan
+    scalar.draw()
+    
+    # difference between images
+    diff = megan - robot
+    diff.draw()
+    
+    # negative of an image
+    negative = megan.copy().negate()
+    negative.draw()
+    
+    # histogram
+    print megan.histogram()
+    
+    # threshold at L/2
+    thr = megan.copy().black_and_white().thresholdize(L/2)
+    thr.draw()
+    
+    
+    # draw original images
     megan.draw()
+    robot.draw()
+    
