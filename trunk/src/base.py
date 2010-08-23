@@ -34,6 +34,15 @@ class MemoryImage(object):
         return self
 
 
+    def copy(self):
+        c = self.__class__()
+        c.width = self.width
+        c.height = self.height
+        c.data = self.data[:]
+        
+        return c
+        
+
     @classmethod
     def blank(cls, width, height):
         obj = cls()
