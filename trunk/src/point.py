@@ -67,7 +67,7 @@ class PointBMPImage(BMPImage):
     
     def __rmul__(self, n):
         """Scalar product of an image """
-        if type(n) is not int:
+        if type(n) not in [int, float]:
             raise ValueError
         
         copy = self.copy()
@@ -157,31 +157,44 @@ class PointBMPImage(BMPImage):
         represented as a dictionary containing three dictionaries,
         one for each color in RGB. Each of these dictionaries 
         contains a mapping from byte value to occurrence number. """
-        hist = {"r":{}, "g": {}, "b": {}}
+        hist = {RED:{}, GREEN: {}, BLUE: {}}
         for color in hist:
             for i in xrange(L):
                 hist[color][i] = 0
         
         def f(r, g, b):
-            hist["r"][r] += 1
-            hist["g"][g] += 1
-            hist["b"][b] += 1
+            hist[RED][int(r)] += 1
+            hist[GREEN][int(g)] += 1
+            hist[BLUE][int(b)] += 1
         
         self._map_rgb(f)
         return hist
+    
+    def autocontrastize(self, histogram):
+        upper = 0.0
+        lower = 0.0
+        for color in RGB_COLORS:
+            for r in xrange(L):
+                value = histogram[color][r]
+                upper += value * r
+                lower += value
+        
+        mean = upper / lower
+        self.contrastize(mean-32, mean+32)
+        return self
     
     def equalize(self, histogram):
         n = self.width*self.height
         def t(r,g,b):
             R,G,B = 0.0, 0.0, 0.0
             for j in xrange(int(r)):
-                nj = float(histogram['r'][j])
+                nj = float(histogram[RED][j])
                 R += nj / n
             for j in xrange(int(g)):
-                nj = float(histogram['g'][j])
+                nj = float(histogram[GREEN][j])
                 G += nj / n
             for j in xrange(int(b)):
-                nj = float(histogram['b'][j])
+                nj = float(histogram[BLUE][j])
                 B += nj / n
             return R,G,B
         
@@ -213,10 +226,6 @@ if __name__ == "__main__":
     megan = PointBMPImage("images/MEGAN.BMP")
     robot = PointBMPImage("images/MARS.BMP")
     
-    # auto equalize with histogram
-    equ = megan.copy().equalize(megan.histogram())
-    megan.draw()
-    equ.draw()
     # image sum
     sum = megan + robot
     sum.draw()
@@ -226,7 +235,7 @@ if __name__ == "__main__":
     prod.draw()
     
     # scalar product of an image
-    scalar = 3 * megan
+    scalar = 5 * megan
     scalar.draw()
     
     # difference between images
@@ -240,12 +249,34 @@ if __name__ == "__main__":
     # histogram
     print megan.histogram()
     
+    # autocontrast with histogram
+    lc = PointBMPImage("images/low_contrast.bmp")
+    
+    lc.draw()
+    lc.save("1a.bmp")
+    lc.autocontrastize(lc.histogram())
+    lc.autocontrastize(lc.histogram())
+    lc.save("1b.bmp")
+    lc.draw()
+    
     # threshold at L/2
     thr = megan.copy().black_and_white().thresholdize(L/2)
     thr.draw()
     
+    # auto equalize with histogram
+    lena = PointBMPImage("images/LenaDark.bmp")
+    lena.draw()
+    equ = lena.copy().equalize(lena.histogram())
+    equ.draw()
+    equ.save("2a.bmp")
+    # equalizing twice produces no effect 
+    # (uncomment to verify)
     
-    # draw original images
-    megan.draw()
-    robot.draw()
+    #equ.equalize(equ.histogram())
+    #equ.draw()
+    #equ.save("2b.bmp")
     
+    # here we examine the difference between 
+    # original and equalized image
+    diff = lena - equ
+    diff.draw()
