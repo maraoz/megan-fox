@@ -2,7 +2,7 @@
 
 from base import RawImage, BMPImage, RGB_COLORS, RED, GREEN, BLUE
 from math import log
-    
+from util import draw_histogram
 
 class PointRawImage(RawImage):
     """ Raw image type that supports point operators"""
@@ -28,7 +28,7 @@ class PointBMPImage(BMPImage):
                     value2 = other.get_pixel(x, y, color) 
                     sum = value1 + value2
                     copy.set_pixel(x, y, color, sum)
-        R = (L-1) * 2     
+        R = (L - 1) * 2     
         copy.normalize(0, max(copy.data))
         return copy
     
@@ -45,7 +45,7 @@ class PointBMPImage(BMPImage):
                     value2 = other.get_pixel(x, y, color) 
                     diff = value1 - value2
                     copy.set_pixel(x, y, color, diff)
-        copy.normalize(min(copy.data), max(copy.data))
+        copy.normalize()
         return copy
     
     def __mul__(self, other):
@@ -73,7 +73,7 @@ class PointBMPImage(BMPImage):
         copy = self.copy()
         copy._map(lambda r: n * r)
         
-        copy.normalize(min(copy.data), max(copy.data))
+        copy.normalize()
         return copy
     
     def __iter__(self):
@@ -180,13 +180,13 @@ class PointBMPImage(BMPImage):
                 lower += value
         
         mean = upper / lower
-        self.contrastize(mean-32, mean+32)
+        self.contrastize(mean - 32, mean + 32)
         return self
     
     def equalize(self, histogram):
-        n = self.width*self.height
-        def t(r,g,b):
-            R,G,B = 0.0, 0.0, 0.0
+        n = self.width * self.height
+        def t(r, g, b):
+            R, G, B = 0.0, 0.0, 0.0
             for j in xrange(int(r)):
                 nj = float(histogram[RED][j])
                 R += nj / n
@@ -196,18 +196,23 @@ class PointBMPImage(BMPImage):
             for j in xrange(int(b)):
                 nj = float(histogram[BLUE][j])
                 B += nj / n
-            return R,G,B
+            return R, G, B
         
         self._map_rgb(t)
         
         smin = min(self.data)
-        self._map(lambda r: int((r-smin)*(L-1)/(1-smin)+0.5))
+        self._map(lambda r: int((r - smin) * (L - 1) / (1 - smin) + 0.5))
         
         return self
     
-    def normalize(self, Q, R):
+    def normalize(self, Q = None, R = None):
         """ Makes all image's pixels fall in the valid range [0, L-1].
         R is the maximum value it can take. """
+        
+        if not Q:
+            Q = min(self.data)
+        if not R:
+            R = max(self.data)
         
         # logarithmic
         #c = (L-1) / log(1+R)
@@ -225,6 +230,7 @@ if __name__ == "__main__":
     # loading images from files
     megan = PointBMPImage("images/MEGAN.BMP")
     robot = PointBMPImage("images/MARS.BMP")
+    draw_histogram(megan.data)
     
     # image sum
     sum = megan + robot
@@ -260,23 +266,7 @@ if __name__ == "__main__":
     lc.draw()
     
     # threshold at L/2
-    thr = megan.copy().black_and_white().thresholdize(L/2)
+    thr = megan.copy().black_and_white().thresholdize(L / 2)
     thr.draw()
     
-    # auto equalize with histogram
-    lena = PointBMPImage("images/LenaDark.bmp")
-    lena.draw()
-    equ = lena.copy().equalize(lena.histogram())
-    equ.draw()
-    equ.save("2a.bmp")
-    # equalizing twice produces no effect 
-    # (uncomment to verify)
-    
-    #equ.equalize(equ.histogram())
-    #equ.draw()
-    #equ.save("2b.bmp")
-    
-    # here we examine the difference between 
-    # original and equalized image
-    diff = lena - equ
-    diff.draw()
+   
