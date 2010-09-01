@@ -32,6 +32,11 @@ def rand_gaussian(mu = 0, sigma_squared = 1):
     return mu + sigma_squared*y
 
 
+def EmptyMatrix(row_number, col_number):
+    return [[None for col in col_number] for row in xrange(row_number)]
+
+def Matrix(*rows):
+    return [row for row in rows]
 
 
 

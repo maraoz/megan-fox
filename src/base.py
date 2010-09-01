@@ -142,7 +142,10 @@ class ColorImage(MemoryImage):
         )
     
     def get_pixel(self, x, y, color):
-        return self.data[(y * self.width + x) * 3 + color]
+        try:
+            return self.data[(y * self.width + x) * 3 + color]
+        except IndexError:
+            return 0 
     
     def set_pixel(self, x, y, color, value):
         self.data[(y * self.width + x) * 3 + color] = value
