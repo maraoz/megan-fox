@@ -193,6 +193,7 @@ class RawImage(GrayscaleImage):
         fout = open(filename, "w")
         fout.write(self.data.tostring())
         fout.close()
+        return save
     
         
 class PGMImage(EasyLoadImage, GrayscaleImage):
