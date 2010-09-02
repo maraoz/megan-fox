@@ -6,7 +6,7 @@ from math import log
 from random import random
 
 from util import draw_histogram, rand_exponential, rand_rayleigh, rand_gaussian
-from util import Matrix, EmptyMatrix
+from util import Matrix, EmptyMatrix, median
     
 
 
@@ -41,7 +41,7 @@ class SpaceBMPImage(PointBMPImage):
         self.normalize()
         return self
 
-    def linear_mask(self, mask):
+    def linear_filter(self, mask):
         m, n = len(mask), len(mask[0])
         if m % 2 != 1 or n % 2 != 1:
             raise ValueError("Mask must have odd number of rows and columns")
@@ -61,18 +61,40 @@ class SpaceBMPImage(PointBMPImage):
                     copy.set_pixel(x, y, color, total)
         return copy
     
-    def mean_mask(self, order):
+    def mean_filter(self, order):
         n = (2*order+1)
         m = [[1.0/(n*n) for col in xrange(n)] for row in xrange(n)]
-        return self.linear_mask(m)
+        return self.linear_filter(m)
+    
+    def lowpass_filter(self, order):
+        pass
+    def highpass_filter(self, order):
+        pass
+    
+    def median_filter(self, order):
+        a, b = order, order
+        
+        copy = self.copy()
+        
+        for x in xrange(self.width):
+            for y in xrange(self.height):
+                for color in RGB_COLORS:
+                    group = [self.get_pixel(x+s, y+t, color) \
+                             for s in xrange(-a,a+1) \
+                             for t in xrange(-b, b+1) ]
+                    m = median(group)
+                    copy.set_pixel(x, y, color, m)
+        return copy
 
 if __name__ == "__main__":
     
     # load image from file
-    megan = SpaceBMPImage("images/MEGAN.BMP")
-    mean1 = megan.mean_mask(5)
-    mean1.save("mean.bmp")
-    mean1.draw()
+    megan = SpaceBMPImage("images/LITTLE_MEGAN.BMP")
+    noisy = megan.add_salt_and_pepper_noise()
+    noisy.save("snp.bmp")
+    noisy.draw()
+    noisy.median_filter(1).save("snp_median.bmp")
+
     exit(0)
     # add gaussian noise
     gaussian = megan.copy().add_gaussian_noise(15)
@@ -94,4 +116,8 @@ if __name__ == "__main__":
     snp.draw()
     snp.save("salt&pepper.bmp")
 
+    # apply mean filter with a 
+    mean3 = megan.copy().mean_filter(5)
+    mean3.save("mean.bmp")
+    mean3.draw()
 

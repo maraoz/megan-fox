@@ -38,7 +38,15 @@ def EmptyMatrix(row_number, col_number):
 def Matrix(*rows):
     return [row for row in rows]
 
-
+def median(values):
+    theValues = sorted(values)
+    count = len(theValues)
+    if count % 2 == 1:
+         return theValues[(count-1)/2]
+    else:
+        lower = theValues[count/2-1]
+        upper = theValues[count/2]
+        return (float(lower + upper)) / 2
 
 if __name__ == "__main__":
     
