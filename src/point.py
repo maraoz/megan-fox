@@ -111,9 +111,11 @@ class PointBMPImage(BMPImage):
         self._map(lambda r: L - 1 - r)
         return self
         
-    def thresholdize(self, u):
+    def thresholdize(self, u = None):
         """ Takes each pixel to an extreme evaluating if it is below
         or over a certain threshold. """
+        if not u:
+            u = self.mean_pixel()
         self._map(lambda r: 0 if r <= u else L - 1)
         return self
         
@@ -170,20 +172,41 @@ class PointBMPImage(BMPImage):
         self._map_rgb(f)
         return hist
     
+    def mean_pixel(self, histogram = None):
+        """ Get the mean value of all pixels.
+        If histogram is provided, it is used, as it is faster
+        to obtain analyzing it than analyzing the whole image. """
+    
+        if histogram:
+            # faster version using histogram
+            upper = 0.0
+            lower = 0.0
+            for color in RGB_COLORS:
+                for r in xrange(L):
+                    value = histogram[color][r]
+                    upper += value * r
+                    lower += value
+            
+            return upper / lower
+        # slower, histogramless version
+        d = {"sum" : 0.0}
+        def f(r):
+            d["sum"] += r
+        self._map(f)
+        return d["sum"] / (self.width * self.height * 3)
+    
     def autocontrastize(self, histogram):
-        upper = 0.0
-        lower = 0.0
-        for color in RGB_COLORS:
-            for r in xrange(L):
-                value = histogram[color][r]
-                upper += value * r
-                lower += value
-        
-        mean = upper / lower
+        """ Adjust contrast automatically analyzing the 
+        image's histogram. It takes the contrast function with
+        the weighted mean of the pixel values as the limit
+        for enhancement or reduction of brightness"""
+        mean = self.mean_pixel(histogram)
         self.contrastize(mean - 32, mean + 32)
         return self
     
     def equalize(self, histogram):
+        """ Equalize histogram so that the probability
+        distribution function becomes uniform (Fx(X) = X) """
         n = self.width * self.height
         def t(r, g, b):
             R, G, B = 0.0, 0.0, 0.0
@@ -219,9 +242,13 @@ class PointBMPImage(BMPImage):
         #self._map(lambda r: c * log(1+r))
         
         # linear
+        if R == Q:
+            return self
+                
         m = (L - 1) / (R - Q)
         b = -m * Q
         self._map(lambda r: m * r + b)
+        return self
     
 
 
