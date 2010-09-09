@@ -2,7 +2,7 @@
 
 from base import RGB_COLORS, RED, GREEN, BLUE
 from point import PointBMPImage, L
-from math import log
+from math import log, fabs
 from random import random
 
 from util import draw_histogram, rand_exponential, rand_rayleigh, rand_gaussian
@@ -15,17 +15,26 @@ class SpaceBMPImage(PointBMPImage):
     """ BMP format image that supports spatial and point operators"""
     
     def add_gaussian_noise(self, sigma_squared):
-        self._map(lambda r: r + rand_gaussian(0, sigma_squared))
+        def n(r,g,b):
+            x = rand_gaussian(0, sigma_squared)
+            return r+x, g+x, b+x
+        self._map_rgb(n)
         self.normalize()
         return self
     
     def add_rayleigh_noise(self, xi):
-        self._map(lambda r: r * rand_rayleigh(xi))
+        def n(r,g,b):
+            x = rand_rayleigh(xi)
+            return r*x, g*x, b*x
+        self._map_rgb(n)
         self.normalize()
         return self
 
     def add_exponential_noise(self, lam):
-        self._map(lambda r: r * rand_exponential(lam))
+        def n(r,g,b):
+            x = rand_exponential(lam)
+            return r*x, g*x, b*x
+        self._map_rgb(n)
         self.normalize()
         return self
 
@@ -89,23 +98,51 @@ class SpaceBMPImage(PointBMPImage):
                     copy.set_pixel(x, y, color, m)
         return copy
     
+    def abs(self):
+        self._map(lambda r : fabs(r))
+        return self
+    
     def detect_borders_roberts(self):
-        one = self.linear_filter([[0, 0, 0], [0, 1, 0], [0, 0, -1]])
-        two = self.linear_filter([[0, 0, 0], [0, 0, 1], [0, -1, 0]])
-        bordered = one + two
+        one = self.linear_filter([[1, 0],[0, -1]])
+        two = self.linear_filter([[0, 1], [-1, 0]])
+        bordered = one.abs() + two.abs()
         return bordered.normalize() 
 
     def detect_borders_prewitt(self):
         one = self.linear_filter([[-1, -1, -1], [0, 0, 0], [1, 1, 1]])
         two = self.linear_filter([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]])
-        bordered = one + two
+        bordered = one.abs() + two.abs()
         return bordered.normalize() 
 
     def detect_borders_sobel(self):
         one = self.linear_filter([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
         two = self.linear_filter([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-        bordered = one + two
-        return bordered.normalize() 
+        bordered = one.abs() + two.abs()
+        return bordered.normalize()
+    
+    def anisotropic_difusion(self):
+        pass
+    def isotropic_difusion(self, t):
+        lam = 1.0/4
+        current = self
+        for i in xrange(t):
+            copy = current.copy()
+            
+            for x in xrange(self.width):
+                for y in xrange(self.height):
+                    for color in RGB_COLORS:
+                        value = self.get_pixel(x,y,color) 
+                        
+                        dn = self.get_pixel(x,y+1,color) - value
+                        ds = value - self.get_pixel(x,y-1,color)
+                        de = self.get_pixel(x+1,y,color) - value
+                        dw = value - self.get_pixel(x-1,y,color)
+                        
+                        result = value + lam*(dn+ds+de+dw)
+                        copy.set_pixel(x,y,color, result)
+            current = copy
+        return copy
+        
 
 if __name__ == "__main__":
     
@@ -113,19 +150,25 @@ if __name__ == "__main__":
     # load image from file
     megan = SpaceBMPImage("images/LITTLE_MEGAN.BMP")
     megan = megan.black_and_white()
+
+    # roberts
+    # megan.detect_borders_roberts().draw()
+    # prewitt
+    #megan.detect_borders_prewitt().draw()
+    # sobel
+    #megan.detect_borders_sobel().draw()
     
-    
-    exit(0)
-    
-    
-    
+      
     # add gaussian noise
     gaussian = megan.copy().add_gaussian_noise(15)
     gaussian.draw()
     gaussian.save("gaussian.bmp")
     
+    # isotropic difusion
+    gaussian.isotropic_difusion(10).draw()
+    
     # add rayleigh noise
-    rayleigh = megan.copy().add_rayleigh_noise(0.001)
+    rayleigh = megan.copy().add_rayleigh_noise(0.1)
     rayleigh.draw()
     rayleigh.save("rayleigh.bmp")
     
@@ -159,11 +202,3 @@ if __name__ == "__main__":
     # lowpass filter
     megan.lowpass_filter(5).draw()
 
-    # roberts
-    megan.detect_borders_roberts().thresholdize().draw()
-
-    # prewitt
-    megan.detect_borders_prewitt().thresholdize().draw()
-    
-    # sobel
-    megan.detect_borders_sobel().thresholdize().draw()
