@@ -1,6 +1,6 @@
 # *-* coding: utf-8 *-*
 
-from math import log, sqrt, pi, cos, sin
+from math import log, sqrt, pi, cos, sin, exp
 from random import random
 
 def draw_histogram(x):
@@ -48,8 +48,18 @@ def median(values):
         upper = theValues[count/2]
         return (float(lower + upper)) / 2
 
+def lorentzian(s):
+    sigma = 10
+    return 1.0 / ((s * s) / float(sigma) + 1.0)
+
+def leclerquian(s):
+    sigma = 10
+    return exp(-(s*s)/float(sigma))
+
 if __name__ == "__main__":
     
+    for i in xrange(10):
+        print lorentzian(i)
     # draw_histogram([rand_exponential(3) for _ in xrange(1000000)])
     # draw_histogram([rand_rayleigh(3) for _ in xrange(1000000)])
-    draw_histogram([rand_gaussian(mu = 100, sigma = 10) for _ in xrange(1000000)])
+    # draw_histogram([rand_gaussian(mu = 100, sigma = 10) for _ in xrange(1000000)])
