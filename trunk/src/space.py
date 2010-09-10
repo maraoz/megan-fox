@@ -7,6 +7,7 @@ from random import random
 
 from util import draw_histogram, rand_exponential, rand_rayleigh, rand_gaussian
 from util import Matrix, EmptyMatrix, median
+from util import lorentzian, leclerquian 
     
 
 
@@ -15,25 +16,25 @@ class SpaceBMPImage(PointBMPImage):
     """ BMP format image that supports spatial and point operators"""
     
     def add_gaussian_noise(self, sigma_squared):
-        def n(r,g,b):
+        def n(r, g, b):
             x = rand_gaussian(0, sigma_squared)
-            return r+x, g+x, b+x
+            return r + x, g + x, b + x
         self._map_rgb(n)
         self.normalize()
         return self
     
     def add_rayleigh_noise(self, xi):
-        def n(r,g,b):
+        def n(r, g, b):
             x = rand_rayleigh(xi)
-            return r*x, g*x, b*x
+            return r * x, g * x, b * x
         self._map_rgb(n)
         self.normalize()
         return self
 
     def add_exponential_noise(self, lam):
-        def n(r,g,b):
+        def n(r, g, b):
             x = rand_exponential(lam)
-            return r*x, g*x, b*x
+            return r * x, g * x, b * x
         self._map_rgb(n)
         self.normalize()
         return self
@@ -103,7 +104,7 @@ class SpaceBMPImage(PointBMPImage):
         return self
     
     def detect_borders_roberts(self):
-        one = self.linear_filter([[1, 0],[0, -1]])
+        one = self.linear_filter([[1, 0], [0, -1]])
         two = self.linear_filter([[0, 1], [-1, 0]])
         bordered = one.abs() + two.abs()
         return bordered.normalize() 
@@ -120,28 +121,41 @@ class SpaceBMPImage(PointBMPImage):
         bordered = one.abs() + two.abs()
         return bordered.normalize()
     
-    def anisotropic_difusion(self):
-        pass
-    def isotropic_difusion(self, t):
-        lam = 1.0/4
+    def anisotropic_diffusion(self, t, diffusion_function=None):
+        if not diffusion_function:
+            diffusion_function = lorentzian
+        g = diffusion_function
+        
+        lam = 1.0 / 4
         current = self
         for i in xrange(t):
             copy = current.copy()
             
-            for x in xrange(self.width):
-                for y in xrange(self.height):
+            for x in xrange(current.width):
+                for y in xrange(current.height):
                     for color in RGB_COLORS:
-                        value = self.get_pixel(x,y,color) 
+                        value = current.get_pixel(x, y, color) 
                         
-                        dn = self.get_pixel(x,y+1,color) - value
-                        ds = value - self.get_pixel(x,y-1,color)
-                        de = self.get_pixel(x+1,y,color) - value
-                        dw = value - self.get_pixel(x-1,y,color)
+                        dn = current.get_pixel(x, y - 1, color) - value 
+                        ds = current.get_pixel(x, y + 1, color) - value
+                        de = current.get_pixel(x + 1, y, color) - value
+                        dw = current.get_pixel(x - 1, y, color) - value
                         
-                        result = value + lam*(dn+ds+de+dw)
-                        copy.set_pixel(x,y,color, result)
+                        result = value + lam * (dn * g(dn) + ds * g(ds) + de * g(de) + dw * g(dw))
+                        copy.set_pixel(x, y, color, result)
             current = copy
         return copy
+    
+    def leclerquian_difussion(self, t):
+        return self.anisotropic_diffusion(t, leclerquian).normalize()
+    def lorentzian_difussion(self, t):
+        return self.anisotropic_diffusion(t, lorentzian).normalize()
+
+    def isotropic_diffusion(self, sigma):
+        return self.anisotropic_diffusion(sigma, lambda x: 1).normalize()
+
+    def manu_diffusion(self, sigma):
+        return self.anisotropic_diffusion(sigma, lambda x: x)
         
 
 if __name__ == "__main__":
@@ -149,23 +163,14 @@ if __name__ == "__main__":
     
     # load image from file
     megan = SpaceBMPImage("images/LITTLE_MEGAN.BMP")
-    megan = megan.black_and_white()
-
-    # roberts
-    # megan.detect_borders_roberts().draw()
-    # prewitt
-    #megan.detect_borders_prewitt().draw()
-    # sobel
-    #megan.detect_borders_sobel().draw()
-    
+    #megan = megan.black_and_white()
+    megan.anisotropic_diffusion(50).draw()
       
     # add gaussian noise
-    gaussian = megan.copy().add_gaussian_noise(15)
+    gaussian = megan.copy().add_gaussian_noise(25)
     gaussian.draw()
     gaussian.save("gaussian.bmp")
     
-    # isotropic difusion
-    gaussian.isotropic_difusion(10).draw()
     
     # add rayleigh noise
     rayleigh = megan.copy().add_rayleigh_noise(0.1)
@@ -201,4 +206,20 @@ if __name__ == "__main__":
     
     # lowpass filter
     megan.lowpass_filter(5).draw()
+    
+    # roberts
+    megan.detect_borders_roberts().draw()
+    # prewitt
+    megan.detect_borders_prewitt().draw()
+    # sobel
+    megan.detect_borders_sobel().draw()
+    
+    # buggy interesting difusion
+    gaussian.manu_diffusion(4).draw()
+    
+    # isotropic diffusion
+    megan.isotropic_diffusion(10).draw()
+    
+    # anisotropic diffusion
+    
 
