@@ -57,9 +57,7 @@ def leclerquian(s):
     return exp(-(s*s)/float(sigma))
 
 if __name__ == "__main__":
-    
-    for i in xrange(10):
-        print lorentzian(i)
+    draw_histogram([rand_rayleigh(10) for _ in xrange(1000000)])
     # draw_histogram([rand_exponential(3) for _ in xrange(1000000)])
     # draw_histogram([rand_rayleigh(3) for _ in xrange(1000000)])
-    # draw_histogram([rand_gaussian(mu = 100, sigma = 10) for _ in xrange(1000000)])
+    # draw_histogram([rand_gaussian(mu = 100, sigma_squared = 10) for _ in xrange(1000000)])

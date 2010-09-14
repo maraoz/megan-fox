@@ -171,6 +171,19 @@ class PointBMPImage(BMPImage):
         
         self._map_rgb(f)
         return hist
+
+    def draw_histogram(self):
+        """ Paint the image histogram in a new image and draw it."""
+        h = self.histogram()
+        im = PointBMPImage.blank(256+40, 100+40)
+        maxim = max([max(hc.values()) for hc in h.values()])
+        for color in h:
+            hc = h[color]
+            for index in hc:
+                height = (hc[index] * 100) / maxim
+                for col in xrange(height):
+                    im.set_pixel(index+20, 140-(col+20), color, 255)
+        im.draw()
     
     def mean_pixel(self, histogram = None):
         """ Get the mean value of all pixels.
