@@ -44,10 +44,10 @@ class MemoryImage(object):
         
 
     @classmethod
-    def blank(cls, width, height):
+    def blank(cls, width, height, color = 0.0):
         obj = cls()
         obj.width, obj.height = width, height
-        obj.data = array('d', cls._blank(width, height))
+        obj.data = array('d', cls._blank(width, height, color))
         return obj
 
     @classmethod
@@ -60,7 +60,7 @@ class MemoryImage(object):
     
     
     @classmethod
-    def _blank(cls, width, height):
+    def _blank(cls, width, height, color=0.0):
         raise NotImplementedError
     
     @classmethod
@@ -111,8 +111,8 @@ class GrayscaleImage(MemoryImage):
         return new
     
     @classmethod
-    def _blank(cls, width, height):
-        return [255.0 for c in xrange(width * height)]
+    def _blank(cls, width, height, color=0.0):
+        return [color for c in xrange(width * height)]
     @classmethod
     def _rectangle(cls, width, height, x0, y0, w, h):
         l = []
@@ -161,8 +161,8 @@ class ColorImage(MemoryImage):
     
     
     @classmethod
-    def _blank(cls, width, height):
-        return [255.0 for c in xrange(width * height * 3)]
+    def _blank(cls, width, height, color=0.0):
+        return [color for c in xrange(width * height * 3)]
     @classmethod
     def _rectangle(cls, width, height, x0, y0, w, h):
         l = []
@@ -193,7 +193,7 @@ class RawImage(GrayscaleImage):
         fout = open(filename, "w")
         fout.write(self.data.tostring())
         fout.close()
-        return save
+        return self
     
         
 class PGMImage(EasyLoadImage, GrayscaleImage):
@@ -253,7 +253,6 @@ def display_color_random():
 
 
 if __name__ == "__main__":
-
 
     # loading and drawing images of all 4 types
     PGMImage("images/TEST.PGM").draw()
