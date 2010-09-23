@@ -49,11 +49,11 @@ def median(values):
         return (float(lower + upper)) / 2
 
 def lorentzian(s):
-    sigma = 10
+    sigma = 100
     return 1.0 / ((s * s) / float(sigma) + 1.0)
 
 def leclerquian(s):
-    sigma = 10
+    sigma = 100
     return exp(-(s*s)/float(sigma))
 
 if __name__ == "__main__":
