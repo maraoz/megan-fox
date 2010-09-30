@@ -48,6 +48,26 @@ class BorderBMPImage(SpaceBMPImage):
         phawr = self.linear_filter([[0,1,2], [-1,0,1], [-2,-1,0]])
         bordered = one.abs() + two.abs() + three.abs() + phawr.abs()
         return bordered.normalize()
+    
+    def laplacian(self):
+        one = self.linear_filter([[0, -1, 0], [-1,4,-1], [0,-1,0]])
+        copy = one.copy()
+        for color in RGB_COLORS:
+            for x in xrange(one.width):
+                for y in xrange(one.height):
+                    prev = one.get_pixel(x-1, y, color)
+                    value = one.get_pixel(x, y, color)
+                    if prev * value < 0:
+                        copy.set_pixel(x,y,color, L-1)
+                    elif abs(prev * value) < 0.01:
+                        if prev * one.get_pixel(x+1, y, color) < 0:
+                            copy.set_pixel(x,y,color, L-1)
+                        else:
+                            copy.set_pixel(x,y,color, 0.0)
+                    else:
+                        copy.set_pixel(x,y,color, 0.0)
+                        
+        return copy
 
 if __name__ == "__main__":
     
@@ -55,4 +75,4 @@ if __name__ == "__main__":
     # load image from file
     megan = BorderBMPImage(os.path.join("images","LITTLE_MEGAN.BMP"))
     megan.black_and_white()
-    megan.detect_borders_valley2().draw()
+    megan.laplacian().draw()
