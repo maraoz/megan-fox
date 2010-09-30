@@ -163,7 +163,6 @@ class SpaceBMPImage(PointBMPImage):
 
 if __name__ == "__main__":
     
-    
     # create new blank image
     blank = SpaceBMPImage.blank(256,256,128.0)
 
