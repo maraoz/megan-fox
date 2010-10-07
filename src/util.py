@@ -56,6 +56,12 @@ def leclerquian(s):
     sigma = 100
     return exp(-(s*s)/float(sigma))
 
+def get_LoG_element(x, y, sigma):
+    a = - (1.0)/(sqrt(2*pi)*(sigma**3))
+    b = 2.0 - (x**2 + y**2)/float(sigma**2)
+    c = - (x**2+y**2)/float(2*(sigma**2))
+    return a*b*exp(c)
+
 if __name__ == "__main__":
     draw_histogram([rand_rayleigh(10) for _ in xrange(1000000)])
     # draw_histogram([rand_exponential(3) for _ in xrange(1000000)])
