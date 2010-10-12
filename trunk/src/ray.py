@@ -23,8 +23,14 @@ class Vector(object):
         self.z /= n
         return self
     
+    def __add__(self, other):
+        return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
+    
     def __sub__(self, other):
         return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
+    
+    def __rmul__(self, other):
+        return Vector(self.x * other, self.y * other, self.z * other)
     
     def distance(self, other):
         diff = self - other
@@ -39,24 +45,39 @@ class Camera(object):
     def __init__(self, pos):
         self.pos = pos
 
+
 class Sphere(object):
-    def __init__(self, origin, radius):
+    def __init__(self, origin, radius, color):
         self.origin = origin
         self.radius = radius
+        self.color = color
     
     def contains(self, point):
         dist = self.origin.distance(point)
         return dist <= self.radius
+    
+    def get_tone(self, color):
+        if self.color == color:
+            return 255
+        else:
+            return 0
 
 class Ray(object):
     
     def __init__(self, origin, dir):
         self.origin = origin
         self.dir = dir
-        self.ttl = 100
+        self.ttl = 200
     
     def intersects(self, obj):
-        pass
+        if self.ttl == 0:
+            return False
+        if obj.contains(self.origin):
+            return True
+        self.origin = self.origin + 10* self.dir
+        self.ttl -= 1
+        #print self.ttl, self.origin
+        return self.intersects(obj)
         
 
 
@@ -74,26 +95,30 @@ class Scene(object):
                 for color in RGB_COLORS:
                     x = xi - self.image.width / 2
                     y = yi - self.image.height / 2
-                    origin = camera.pos
-                    dir = origin - Vector(x,y,0)
+                    origin = self.camera.pos
+                    dir = Vector(x,y,0) - origin
                     dir = dir.normalize()
-                    r = Ray(origin, dir)
                     for obj in self.objects:
-                        value = r.intersects()
+                        r = Ray(origin, dir)
+                        value = r.intersects(obj)
                         if value:
-                            self.image.set_pixel(xi,yi,color, value)
+                            tone = obj.get_tone(color)
+                            self.image.set_pixel(xi,yi,color, tone)
         
     
 
         
 if __name__ == "__main__":
     v = Vector(1, 1, 1)
-    print v.normalize()
     
     p = Vector(1, 2, 0)
-    s = Sphere(Vector(0, 200, 500), 100)
-    print s.contains(p)
-    
-    cam = Camera(Vector(0,0,-500))
-    
+    sp = Sphere(Vector(0, 0, 550), 20, RED)
+    sp2 = Sphere(Vector(0, 10, 500), 20, GREEN)
+    for i in xrange(-500,-300,20):
+        c =  (i+300) /-20
+        print i,c
+        cam = Camera(Vector(c,c,i))
+        s = Scene(50, 50, cam, [sp, sp2])
+        s.render()
+        s.image.save("arch"+str(-1*i)+".bmp")
     
