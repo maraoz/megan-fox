@@ -372,7 +372,7 @@ if __name__ == "__main__":
     canned = BorderBMPImage(os.path.join("images", "WDG3_MINI.BMP"))
     canned = canned.autocontrastize(canned.histogram())
     susaned = canned.susan_border_detector()
-    houghed = susaned.hough_line_detector(10)
+    houghed = susaned.hough_line_detector(20)
     
     d = canned + houghed
     d.draw() 
