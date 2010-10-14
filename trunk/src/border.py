@@ -210,8 +210,9 @@ class BorderBMPImage(SpaceBMPImage):
             for color in RGB_COLORS:
                 self.set_pixel(0,y,color, 0.0)
                 self.set_pixel(self.width-1,y,color, 0.0)
+        return self
     
-    def canny(self, verbose=False):
+    def canny(self, verbose=False, stop_at_no_max = False):
         if verbose: print "1: apply gaussian convolution"
         self.gaussianate(1.0)
         if verbose: print "2: obtain border directions"
@@ -222,6 +223,8 @@ class BorderBMPImage(SpaceBMPImage):
         start = gx.abs() + gy.abs()
         if verbose: print "4: supress no maximums"
         nms = start.no_max_supress(phi, 0.1)
+        if stop_at_no_max:
+            return nms.clean_borders()
         if verbose: print "5: apply histerical umbralization"
         h = nms.histerical_umbralization(50, 75)
         if verbose: print "6: Done!"
@@ -323,7 +326,7 @@ class BorderBMPImage(SpaceBMPImage):
             raise ValueError
 
         if detect_borders:
-            self = self.canny()
+            self = self.canny().draw()
             
         parameter_space.initialize()
         
@@ -354,27 +357,66 @@ if __name__ == "__main__":
     
     
     # load image from file
-    #megan = BorderBMPImage(os.path.join("images", "LITTLE_MEGAN.BMP"))
-    #megan.black_and_white()
+    megan = BorderBMPImage(os.path.join("images", "LITTLE_MEGAN.BMP"))
+    megan.black_and_white()
     
-    #megan.susan_corner_detector().draw()
-    #megan.susan_border_detector().draw()
+    print "punto 1"
+    #megan.detect_borders_saddle().draw()
+    #megan.detect_borders_kirsh().draw()
+    #megan.detect_borders_valley().draw()
+    #megan.detect_borders_valley2().draw()
     
-    #square = BorderBMPImage(os.path.join("images", "SQUARE.BMP"))
-    #square.susan_corner_detector().draw()
-    #square.susan_border_detector().draw()
+    print "punto 2"
+    #megan.laplacian().draw()
+    #megan.laplacian_variance(80).draw()
+    #megan.marr_hildreth(3, 1.0, 50).draw()
     
     
-    #canned = BorderBMPImage(os.path.join("images", "TRIANGLE.BMP"))
+    print "punto 3"
+    #megan.canny(verbose = True, stop_at_no_max = True).draw()
+    
+    
+    print "puntos 4 y 5"
+    #megan.canny(verbose = True).draw()
+    
+    print "punto 6"
+
+    #test = BorderBMPImage(os.path.join("images", "TEST.BMP"))
+    #lena = BorderBMPImage(os.path.join("images", "LENA.BMP"))
+    #test_noisy = test.copy().add_gaussian_noise(10)
+    #lena_noisy = lena.copy().add_gaussian_noise(10)
+    
+    #test.draw()
+    #lena.draw()
+    #test_noisy.draw()
+    #lena_noisy.draw()
+    
+    #for image in [test, lena, test_noisy, lena_noisy]:
+    #    image.susan_corner_detector().draw()
+    #    image.susan_border_detector().draw()
+    
+    
+    print "punto 7"
+    
+    #for image in [test, test_noisy]:
+    #    image.copy().hough_line_detector(15, detect_borders = True).draw()
+        
+    
+    print "punto 8"
+    #canned = BorderBMPImage(os.path.join("images", "CIRCLE.BMP"))
     #canned.draw()
-    #canned.hough_line_detector(20).draw()
+    #canned.hough_circle_detector(20).draw()
     
-    canned = BorderBMPImage(os.path.join("images", "WDG3_MINI.BMP"))
-    canned = canned.autocontrastize(canned.histogram())
-    susaned = canned.susan_border_detector()
-    houghed = susaned.hough_line_detector(20)
     
-    d = canned + houghed
-    d.draw() 
+    
+    
+    
+    print "fin de la practica"
+    #canned = BorderBMPImage(os.path.join("images", "WDG3_MINI.BMP"))
+    #canned = canned.autocontrastize(canned.histogram())
+    #susaned = canned.susan_border_detector()
+    #houghed = susaned.hough_line_detector(20)
+    #d = canned + houghed
+    #d.draw() 
     
     
