@@ -8,7 +8,7 @@ def draw_histogram(x):
 
     fig = matplotlib.pyplot.figure()
     ax = fig.add_subplot(111)
-    n, bins, patches = ax.hist(x, 200, normed=1, facecolor='green', alpha=0.75)
+    n, bins, patches = ax.hist(x,500, normed=1, facecolor='green', alpha=0.75)
     
     ax.set_xlabel('Value Range')
     ax.set_ylabel('Frecuency')
@@ -31,6 +31,8 @@ def rand_gaussian(mu = 0, sigma_squared = 1):
     y = sqrt(-2 * log(x1)) * cos(2 * pi * x2) 
     return mu + sigma_squared*y
 
+def rand_vicky():
+    return rand_exponential(3) / float( rand_exponential(3))
 
 def EmptyMatrix(row_number, col_number):
     return [[None for col in col_number] for row in xrange(row_number)]
@@ -63,7 +65,8 @@ def get_LoG_element(x, y, sigma):
     return a*b*exp(c)
 
 if __name__ == "__main__":
-    draw_histogram([rand_rayleigh(10) for _ in xrange(1000000)])
-    # draw_histogram([rand_exponential(3) for _ in xrange(1000000)])
+    #draw_histogram([rand_rayleigh(10) for _ in xrange(1000000)])
+    s = [rand_exponential(3) / rand_exponential(3) for _ in xrange(100000)]
+    draw_histogram(s)
     # draw_histogram([rand_rayleigh(3) for _ in xrange(1000000)])
     # draw_histogram([rand_gaussian(mu = 100, sigma_squared = 10) for _ in xrange(1000000)])
