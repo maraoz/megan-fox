@@ -5,7 +5,7 @@ from point import PointBMPImage, L
 from math import log, fabs
 from random import random
 
-from util import draw_histogram, rand_exponential, rand_rayleigh, rand_gaussian
+from util import draw_histogram, rand_exponential, rand_rayleigh, rand_gaussian, rand_vicky
 from util import Matrix, EmptyMatrix, median
 from util import lorentzian, leclerquian 
 
@@ -36,6 +36,14 @@ class SpaceBMPImage(PointBMPImage):
     def add_exponential_noise(self, lam):
         def n(r, g, b):
             x = rand_exponential(lam)
+            return r * x, g * x, b * x
+        self._map_rgb(n)
+        self.normalize()
+        return self
+    
+    def add_vicky_noise(self):
+        def n(r,g,b):
+            x = rand_vicky()
             return r * x, g * x, b * x
         self._map_rgb(n)
         self.normalize()
@@ -165,6 +173,10 @@ if __name__ == "__main__":
     
     # create new blank image
     blank = SpaceBMPImage.blank(256,256,128.0)
+
+    # add vicky noise
+    vicky = blank.copy().add_vicky_noise()
+    vicky.draw().draw_histogram()
 
     # add gaussian noise
     gaussian = blank.copy().add_gaussian_noise(25)
