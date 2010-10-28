@@ -30,8 +30,9 @@ SUSAN_PIXEL_EPSILON = 15
 SUSAN_CORNER_RATIO = 0.75
 SUSAN_BORDER_RATIO = 0.50
 
-HOUGH_LINEAR_EPSILON = 1
+HOUGH_LINEAR_EPSILON =1.1#1.1
 HOUGH_MAX_PERCENTAGE = 0.6
+HOUGH_MAX_AMMOUNT = 10
 HOUGH_CIRCULAR_EPSILON = 20
 
 class BorderBMPImage(SpaceBMPImage):
@@ -287,7 +288,11 @@ class BorderBMPImage(SpaceBMPImage):
         
                 for i in xrange(n + 1):
                     for j in xrange(n + 1):
-                        self[(0 + i * D / float(n), 0 + j * 2 * pi / float(n))] = 0
+                        d = i*360.0/n
+                        phi = d*2*pi/360.0
+                        r = j * D / float(n)
+                        self[(r, phi)] = 0
+                print self
             def contains(self, parameters, x, y):
                 rho, phi = parameters[0], parameters[1]
                 pcos = cos(phi)
@@ -297,6 +302,13 @@ class BorderBMPImage(SpaceBMPImage):
                 return self.values()
             def increment(self, parameters):
                 self[parameters] += 1
+            def __str__(self):
+                pairs = [(self[k], k) for k in self.keys()]
+                pairs.sort(reverse=False)
+                ret = ""
+                for value, key in pairs:
+                    ret += str(key) + ": "+str(value)+"\n"
+                return ret
         parameter_space = LineSpace()
         return self.hough_detector(n, detect_borders, parameter_space)
     
@@ -321,41 +333,91 @@ class BorderBMPImage(SpaceBMPImage):
         return self.hough_detector(n, detect_borders, parameter_space)
                 
     
-    def hough_detector(self, n=20, detect_borders=False, parameter_space=None):
+    def hough_detector(self, n=20, detect_borders=False, parameter_space=None, fixed_ammount = True):
         if parameter_space is None:
             raise ValueError
 
         if detect_borders:
             self = self.susan_border_detector().draw()
-            self.save("puri.bmp")
-            print "saliooo"
             
         parameter_space.initialize()
         
+        size = len(parameter_space)
+        i = 0
+        
         for parameters in parameter_space:
+            i +=1 
+            print i, "de", size
             for x in xrange(self.width):
                 for y in xrange(self.height):
-                    if self.get_pixel(x, y, GREEN) == L - 1 and \
+                    value = self.get_pixel(x, y, GREEN)
+                    if value == float(L - 1) and \
                     parameter_space.contains(parameters, x, y):
                         parameter_space.increment(parameters)
                 
         mx = max(parameter_space.get_parameters_votes())
-        threshold = HOUGH_MAX_PERCENTAGE * mx
-        
+        print "*"*70
+        print parameter_space
         ret = self.__class__.blank(self.width, self.height, 0.0)
-        for parameters in parameter_space:
-            s = parameter_space[parameters]
-            if s >= threshold:
-                for x in xrange(self.width):
-                    for y in xrange(self.height):
-                        for color in RGB_COLORS:
-                            if parameter_space.contains(parameters, x, y):
-                                ret.set_pixel(x, y, color, L - 1)
-                                
+        
+        #fixed_ammount = False
+        if not fixed_ammount:
+            print "in case 1, guess max ammount"
+            threshold = mx#HOUGH_MAX_PERCENTAGE * mx
+            
+            for parameters in parameter_space:
+                s = parameter_space[parameters]
+                if s >= threshold:
+                    ret.draw_guess(parameter_space, parameters)
+        else:
+            print "in case 2, fixed ammount of maxes"
+            
+            pairs = [(parameter_space[k], k) for k in parameter_space.keys()]
+            pairs.sort(reverse=True)
+            for i in xrange(HOUGH_MAX_AMMOUNT):
+                print i
+                value, key = pairs[i]
+                print key, value
+                ret.draw_guess(parameter_space, key)
+            #for parameters in parameter_space.keys():
+            #    if 0 < parameters[1] < pi:
+            #        ret.draw_guess(parameter_space, parameters)
+            #for i in xrange(5):
+            #    for r in xrange(0,100,20):
+            #        d = 90+80+i*10/5.0
+            #        angle = d*2*pi/360
+            #        ret.draw_guess(parameter_space, (r,angle))
+                                    
         return ret
+    
+    def draw_guess(self, parameter_space, parameters):
+        for x in xrange(self.width):
+            for y in xrange(self.height):
+                for color in RGB_COLORS:
+                    if parameter_space.contains(parameters, x, y):
+                        self.set_pixel(x, y, color, L - 1)
         
         
 if __name__ == "__main__":
+    
+    
+    
+    p = BorderBMPImage(os.path.join("images", "3POINTS.BMP"))
+    p.draw()
+    h = p.hough_line_detector(30, detect_borders = False)
+    h.draw()
+    s = p+h
+    s.draw()
+    
+    exit(0)
+    
+    c = BorderBMPImage(os.path.join("images", "3CIRCLES.BMP"))
+    c.draw()
+    h = c.hough_circle_detector(15, detect_borders = False)
+    h.draw()
+    s = c+h
+    s.draw()
+    
     
     
     # load image from file
@@ -417,6 +479,7 @@ if __name__ == "__main__":
     
     
     
+    
     print "fin de la practica"
     canned = BorderBMPImage(os.path.join("images", "WDG3_MINI.BMP"))
     canned = canned.autocontrastize(canned.histogram())
@@ -425,4 +488,8 @@ if __name__ == "__main__":
     d = canned + houghed
     d.draw() 
     
+    #test = BorderBMPImage(os.path.join("images", "TEST.BMP"))
+    #h = test.hough_line_detector(50, detect_borders = True).draw()
+    #s = test + h
+    #s.draw()
     
