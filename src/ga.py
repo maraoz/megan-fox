@@ -69,8 +69,10 @@ class GeneticAlgorithm(object):
         return False
 
     def best_callback(self):
-        best = self.get_best_individual()
-        self.generation_callback(best['genes'], best['fitness'])
+        #best = self.get_best_individual()
+        li = [(x['fitness'], x['genes']) for x in self.population]
+        li.sort(reverse=True)
+        self.generation_callback([e[1] for e in li])
         
     def run(self):
         
