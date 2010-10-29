@@ -19,7 +19,8 @@ def draw_histogram(x):
 
 def rand_exponential(lam):
     x = random()
-    return - (1.0 / lam) * log(x)
+    r = - (1.0 / lam) * log(x)
+    return r
 
 def rand_rayleigh(xi):
     x = random()
