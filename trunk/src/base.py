@@ -73,6 +73,8 @@ class MemoryImage(object):
 class EasyLoadImage(MemoryImage):
     """ Image which can be loaded using Python Image Library. """
     def __init__(self, filename=None):
+        
+        self.filename = filename
 
         if filename:
             im = Image.open(filename)
@@ -195,6 +197,7 @@ class RawImage(GrayscaleImage):
         fout.close()
         return self
     
+    
         
 class PGMImage(EasyLoadImage, GrayscaleImage):
     """ PGM Image Format"""
@@ -217,6 +220,24 @@ class BMPImage(EasyLoadImage, ColorImage):
         new_image = Image.fromstring('RGB', (self.width, self.height), \
                     "".join([chr(int(c)) for c in self.data]))
         new_image.save(filename, "BMP")
+        
+    def to_raw(self, i):
+
+        n = RawImage.blank(self.width, self.height, 0)
+        fout = open('out/'+str(i)+".raw", "w")
+        print 'out/'+self.filename.split("/")[-1]+".raw"
+        #fout.write("[ ");
+        for y in xrange(self.height):
+            for x in xrange(self.width):
+                if y % 20 == 0:
+                    fout.write(str(int(255.0))+" ")#(", " if x != self.width-1 else ""))
+                else:
+                    fout.write(str(int(self.get_pixel(x, y, GREEN)))+" ")#(", " if x != self.width-1 else ""))
+            fout.write("\n")
+            #fout.write(";\n" if y != self.height -1 else "\n")
+        #fout.write("]")
+        fout.close()
+        return n
 
 
 
@@ -253,6 +274,19 @@ def display_color_random():
 
 
 if __name__ == "__main__":
+    
+    
+
+    fin = open("nombre.txt")
+    i = 1
+    for line in fin:
+        bmp = BMPImage(line.strip())
+        
+        raw = bmp.to_raw(i)
+        i+=1
+    exit(0)
+
+
 
     # loading and drawing images of all 4 types
     PGMImage("images/TEST.PGM").draw()
