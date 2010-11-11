@@ -1,0 +1,11 @@
+images/cuadradito.bmp
+images/rayas.bmp
+images/P_inclinado.bmp
+images/cuadrado.bmp
+images/palito.bmp
+images/rayas_diag.bmp
+images/a.bmp
+images/inclinado.bmp
+images/palito_acostado.bmp
+images/rayitas.bmp
+images/LENA.BMP
