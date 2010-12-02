@@ -122,10 +122,10 @@ class PointBMPImage(BMPImage):
     def thresholdizeRGB(self, tr, tg, tb):
         """ Takes each pixel to an extreme evaluating if it is below
         or over a certain threshold, for each color channel. """
-        self._map_rgb(function)(lambda r, g, b: 
-                0 if r <= tr else L - 1, 
+        self._map_rgb(lambda r, g, b: 
+                (0 if r <= tr else L - 1, 
                 0 if g <= tg else L - 1, 
-                0 if b <= tb else L - 1)
+                0 if b <= tb else L - 1))
         return self
         
     def contrastize(self, r1, r2):
