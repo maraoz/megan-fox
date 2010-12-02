@@ -22,15 +22,11 @@ class ComplexBMPImage(SpaceBMPImage):
         for color in RGB_COLORS:
             hist = histogram[color]
             list_hist = [hist[value] for value in xrange(len(hist))]
-            print list_hist
             Ng = len(hist)
-            print Ng
             
             suma = sum([hist[value] for value in xrange(Ng)])
             nB = [hist[value] + sum([hist[ivalue] for ivalue in xrange(value)]) for value in xrange(Ng)] # cumsum(hist)
-            print nB
             nO = [nB[-1]-nB[i] for i in xrange(len(nB))] #nB[-1]-nB
-            print nO
             
             mu_B = 0
             loco = [i for i in xrange(1,Ng)]
@@ -38,7 +34,6 @@ class ComplexBMPImage(SpaceBMPImage):
                 loco[i] = loco[i] * hist[i]
                 
             mu_O = sum(loco)/sum(list_hist[1:])
-            print mu_O
             
             best = nB[0]*nO[0]*(mu_B-mu_O)*(mu_B-mu_O)
             bestT = 0
@@ -58,4 +53,5 @@ class ComplexBMPImage(SpaceBMPImage):
 if __name__ == "__main__":
     
     p = ComplexBMPImage(os.path.join("images", "MEGAN.BMP"))
-    print p.otsu()
+    d = p.otsu()
+    print d
