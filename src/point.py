@@ -111,12 +111,21 @@ class PointBMPImage(BMPImage):
         self._map(lambda r: L - 1 - r)
         return self
         
-    def thresholdize(self, u = None):
+    def thresholdize(self, u=None):
         """ Takes each pixel to an extreme evaluating if it is below
         or over a certain threshold. """
         if not u:
             u = self.mean_pixel()
         self._map(lambda r: 0 if r <= u else L - 1)
+        return self
+    
+    def thresholdizeRGB(self, tr, tg, tb):
+        """ Takes each pixel to an extreme evaluating if it is below
+        or over a certain threshold, for each color channel. """
+        self._map_rgb(function)(lambda r, g, b: 
+                0 if r <= tr else L - 1, 
+                0 if g <= tg else L - 1, 
+                0 if b <= tb else L - 1)
         return self
         
     def contrastize(self, r1, r2):
@@ -175,17 +184,17 @@ class PointBMPImage(BMPImage):
     def draw_histogram(self):
         """ Paint the image histogram in a new image and draw it."""
         h = self.histogram()
-        im = PointBMPImage.blank(256+40, 100+40)
+        im = PointBMPImage.blank(256 + 40, 100 + 40)
         maxim = max([max(hc.values()) for hc in h.values()])
         for color in h:
             hc = h[color]
             for index in hc:
                 height = (hc[index] * 100) / maxim
                 for col in xrange(height):
-                    im.set_pixel(index+20, 140-(col+20), color, 255)
+                    im.set_pixel(index + 20, 140 - (col + 20), color, 255)
         im.draw()
     
-    def mean_pixel(self, histogram = None):
+    def mean_pixel(self, histogram=None):
         """ Get the mean value of all pixels.
         If histogram is provided, it is used, as it is faster
         to obtain analyzing it than analyzing the whole image. """
@@ -241,7 +250,7 @@ class PointBMPImage(BMPImage):
         
         return self
     
-    def normalize(self, Q = None, R = None):
+    def normalize(self, Q=None, R=None):
         """ Makes all image's pixels fall in the valid range [0, L-1].
         R is the maximum value it can take. """
         
