@@ -145,6 +145,7 @@ class ComplexBMPImage(SpaceBMPImage):
                                     self.set_pixel(x, y, color, mean_values[color])
                                 break
                 break
+        print "Thresholdized with %d colors" % (len(clusters))
         return self
                                 
                     
@@ -194,11 +195,11 @@ class ComplexBMPImage(SpaceBMPImage):
     
 if __name__ == "__main__":
     
-    # COINS, MEGAN, MEGAN, SONIC, NOTICIA
+    # COINS, MEGAN, SONIC, NOTICIA, HOMEBOY
     
     megan = ComplexBMPImage(os.path.join("images", "NOTICIA.BMP"))
     megan.draw()
-    d = megan.otsu()
+    #d = megan.otsu()
     
     #thr = megan.thresholdizeRGB(d[0], d[1], d[2])
     #thr.draw()
