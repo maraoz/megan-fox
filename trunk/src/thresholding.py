@@ -195,9 +195,9 @@ class ComplexBMPImage(SpaceBMPImage):
     
 if __name__ == "__main__":
     
-    # COINS, MEGAN, SONIC, NOTICIA, HOMEBOY
+    # COINS, MEGAN, SONIC, NOTICIA, HOMEBOY, TREE
     
-    megan = ComplexBMPImage(os.path.join("images", "NOTICIA.BMP"))
+    megan = ComplexBMPImage(os.path.join("images", "TREE.BMP"))
     megan.draw()
     #d = megan.otsu()
     
